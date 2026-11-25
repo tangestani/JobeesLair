@@ -89,7 +89,8 @@ import { FileSystem, Text, View, useIsFocused } from '@ps5-react/core';
     return null;
   }
   // Whether it runs as it is: green "13.60 Ready" for what ShadowMount+ mounts (dumps, images, backports).
-  // Nothing for a fake package (installed first, its pill says FPKG) or what is not known.
+  // Nothing for a fake package (the console installs it, ShadowMount+ does not mount it; its pill says FPKG)
+  // or what is not known.
   function compatBadge(t2, release) {
     // A PS4 backport keeps its pill but not the green badge: whether a console needs one is the backport
     // section's own advice, and "13.60 Ready" beside it read as a recommendation.

@@ -90,8 +90,9 @@ import { archivePassword } from './archive-password.js';
   //   folder   an extracted game folder ("folder dump"), mounted by ShadowMount+ once unpacked
   //   backport files ShadowMount+ lays over a game when it starts (download-queue.js puts them in
   //            homebrew/backports)
-  //   fpkg     a fake package, installed by the console's package service before it can be played (never
-  //            mounted as it is); a PS5 one launches on any jailbroken firmware (kstuff-dr)
+  //   fpkg     a fake package, installed by the console's package service before it can be played; a PS5
+  //            one launches on any jailbroken firmware (kstuff-dr). ShadowMount+ never mounts it: it only
+  //            lays a backport over the installed game when one is needed
   //   unknown  nothing says (an archive or file whose contents show only once downloaded)
   // compatible1360 ("Ready"): true for what ShadowMount+ mounts as it is (image, folder, backport), else null.
   var IMAGE_FORMATS = /* @__PURE__ */ new Set(["exfat", "ffpkg", "ffpfs", "ffpfsc"]);
