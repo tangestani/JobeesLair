@@ -77,7 +77,7 @@ console.log(`--- source list (${picker.rendered} components)\n${picker.out.join(
 assert.deepEqual(rowBadges(picker.out, 'cdn.example.com'), ['.exfat Image', '13.60 Ready']);
 assert.deepEqual(rowBadges(picker.out, 'slow.example.org'), ['.exfat Image', '13.60 Ready', 'Offline'], 'the silent mirror is tagged');
 assert.ok(has(picker.out, /^slow\.example\.org didn't answer\. It may be down for a while\.$/));
-assert.deepEqual(rowBadges(picker.out, 'pkg.example'), ['FPKG', '13.60 Ready'], 'a PS5 FPKG is ready on any jailbroken firmware');
+assert.deepEqual(rowBadges(picker.out, 'pkg.example'), ['FPKG'], 'a PS5 FPKG: its pill, no Ready (installed first), no firmware warning');
 assert.ok(has(picker.out, /^pkg\.example$/), 'no firmware warning under it');
 assert.ok(has(picker.out, /^Folder Dump$/) && has(picker.out, /^Backport$/));
 assert.equal(picker.out[picker.out.indexOf('Recommended') + 1], '.exfat Image', 'Recommended sits on a working image');
@@ -100,12 +100,12 @@ assert.equal(shown[0].unavailableReason, undefined);
 assert.equal(shown[0].health, 'dead');
 assert.equal(shown[1].health, 'flaky');
 
-// The download button with the PS5 FPKG picked (the only source): ready, nothing to warn about.
+// The download button with the PS5 FPKG picked (the only source): not Ready (installed first), nothing to warn about.
 const { DownloadButton } = await load('app/game/DownloadButton.jsx');
 const fpkgGame = { id: 'PPSA01234', titleId: 'PPSA01234', title: 'Test Game', platform: 'ps5', releases: [catalog[4]] };
 const button = texts({ type: DownloadButton, props: { game: fpkgGame, onDownloaded() {}, onRequestDialog() {} } });
 console.log(`--- download button, PS5 FPKG (${button.rendered} components)\n${button.out.join('\n')}`);
-assert.ok(has(button.out, /^13\.60 Ready · Package · USA v1 · pkg\.example/), 'leads with its Ready tag');
+assert.ok(has(button.out, /^Package · USA v1 · pkg\.example/), 'no Ready tag: it is installed first');
 assert.ok(!has(button.out, /won't launch/), 'no launch warning');
 const imageGame = { ...fpkgGame, releases: [catalog[2]] };
 const fine = texts({ type: DownloadButton, props: { game: imageGame, onDownloaded() {}, onRequestDialog() {} } });

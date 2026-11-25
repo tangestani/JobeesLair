@@ -2634,20 +2634,20 @@ test('boot confirmation: the installer starts once, from Boot, before the startu
 const { releaseType, withReleaseTypes } = await load('app/state/release-sets.js');
 const { createReleaseCache } = await load('app/state/release-cache.js');
 
-test('release types: images, folder dumps, backports and a PS5 FPKG are ready; FFPKG is never mistaken for FPKG', () => {
+test('release types: images, folder dumps and backports are ready; an FPKG is installed first, so not; FFPKG is never mistaken for FPKG', () => {
   const type = (release, platform = 'ps5') => { const t = releaseType(release, platform); return [t.dumpType, t.imageFormat, t.compatible1360]; };
   assert.deepEqual(type({ format: 'exfat', filename: 'Game.exfat' }), ['image', 'exfat', true]);
   assert.deepEqual(type({ format: 'ffpkg', filename: 'Game.ffpkg' }), ['image', 'ffpkg', true]);
   assert.deepEqual(type({ format: 'ffpfsc', filename: 'Game.ffpfsc' }), ['image', 'ffpfs', true]);
-  assert.deepEqual(type({ format: 'pkg', filename: 'PPSA01234-game.pkg' }), ['fpkg', null, true], 'PS5: launches on any jailbroken firmware');
+  assert.deepEqual(type({ format: 'pkg', filename: 'PPSA01234-game.pkg' }), ['fpkg', null, null], 'PS5: installed first, not mounted as it is');
   assert.deepEqual(type({ format: 'pkg', filename: 'CUSA01234-game.pkg' }, 'ps4'), ['fpkg', null, null], 'PS4: not confirmed either way');
   assert.deepEqual(type({ format: 'rar', label: 'USA Folder Dump - Direct', filename: 'Game.rar' }), ['folder', null, true]);
   assert.deepEqual(type({ format: 'rar', label: 'USA Base - Direct', url: 'https://h.example/Game_ShadowMount.rar', filename: 'x.rar' }), ['folder', null, true]);
   assert.deepEqual(type({ format: 'zip', filename: 'Game.exfat.zip' }), ['image', 'exfat', true], 'an archive of an image');
   assert.deepEqual(type({ format: 'rar', label: 'USA FFPKG - Direct', filename: 'Game.rar' }), ['image', 'ffpkg', true], 'FFPKG is an image');
   assert.deepEqual(type({ format: 'rar', filename: 'Game.ffpkg.rar' }), ['image', 'ffpkg', true]);
-  assert.deepEqual(type({ format: 'rar', label: 'USA Base FPKG - Direct', filename: 'Game.rar' }), ['fpkg', null, true]);
-  assert.deepEqual(type({ format: 'rar', filename: 'Game.pkg.rar' }), ['fpkg', null, true]);
+  assert.deepEqual(type({ format: 'rar', label: 'USA Base FPKG - Direct', filename: 'Game.rar' }), ['fpkg', null, null]);
+  assert.deepEqual(type({ format: 'rar', filename: 'Game.pkg.rar' }), ['fpkg', null, null]);
   assert.deepEqual(type({ format: 'zip', label: 'USA Backport (v01.10) - Direct', filename: 'Game-Backport.zip' }, 'ps4'), ['backport', null, true]);
   assert.equal(releaseType({ format: 'zip', label: 'USA Backport (v01.10)' }, 'ps4').platform, 'ps4');
   assert.deepEqual(type({ format: 'rar', filename: 'Game.rar' }), ['unknown', null, null], 'nothing says: nothing claimed');
@@ -2674,7 +2674,7 @@ test('release cache: every release carries its type, the platform from the title
   const cache = createReleaseCache((file) => JSON.stringify(files[file]));
   const [ps5] = cache('data/releases/PPSA01234.json');
   const [ps4] = cache('data/releases/CUSA01234.json');
-  assert.deepEqual([ps5.dumpType, ps5.compatible1360, ps5.platform], ['fpkg', true, 'ps5']);
+  assert.deepEqual([ps5.dumpType, ps5.compatible1360, ps5.platform], ['fpkg', null, 'ps5']);
   assert.deepEqual([ps4.dumpType, ps4.compatible1360, ps4.platform], ['fpkg', null, 'ps4']);
 });
 

@@ -261,7 +261,7 @@ import { colors, radius } from '../ui/colors.js';
       checkLinks: () => checkLinksNow(game.id, game.releases || [])
     });
     // 0.5.1: up to three other sources that run on this console (a dump or image, release-sets.js
-    // compatible1360, a PS5 fake package too), in view under the chosen one so nobody has to
+    // compatible1360), in view under the chosen one so nobody has to
     // open the list to find a "13.60 Ready" link; best first (sources.js order). Not add-ons, backports,
     // links found gone, nor sources that need the browser.
     const readyPicks = (0, useMemo)(() => {

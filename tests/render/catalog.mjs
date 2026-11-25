@@ -42,7 +42,7 @@ const formatCounts = facetCounts(all, format);
 assert.ok(format.options.every((option) => formatCounts[option.value] > 0), 'no kind is offered that no game has');
 const ready = filterGames({ filters: { ...NO_FILTERS, format: ['ready'] }, query: '', wishlist });
 assert.ok(ready.length > 100 && ready.length < everything.length, `${ready.length} games are 13.60 ready`);
-assert.ok(ready.every((game) => game.formats.some((kind) => ['folder', 'exfat', 'ffpkg', 'ffpfs', 'image'].includes(kind)) || game.platform === 'ps5' && game.formats.includes('fpkg')), 'a PS5 fake package counts as ready too');
+assert.ok(ready.every((game) => game.formats.some((kind) => ['folder', 'exfat', 'ffpkg', 'ffpfs', 'image'].includes(kind))));
 console.log(`OK: format filter (${ready.length} games 13.60 ready; ${format.options.map((option) => `${option.value} ${formatCounts[option.value]}`).join(', ')})`);
 
 // 0.5.1 Pre Release 1: Browse shows a game once, its PS4 and PS5 editions and the regions of one store page as one

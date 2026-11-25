@@ -21,8 +21,8 @@ import { KINDS, gameFormats, ready1360 } from './formats.js';
 import { FileSystem, Image } from '@ps5-react/core';
 import { PS4 } from './ps4.js';
 
-  // "Ready": a dump or image ShadowMount+ mounts, or a PS5 fake package (they launch on any jailbroken firmware).
-  var readyHere = (game) => ready1360(game.formats ?? []) || game.platform === "ps5" && (game.formats ?? []).includes("fpkg");
+  // "Ready": a dump or image ShadowMount+ mounts as it is. A fake package has to be installed first.
+  var readyHere = (game) => ready1360(game.formats ?? []);
   var COVER_WIDTH = 440;
   var coverSize = (url) => url.startsWith("https://image.api.playstation.com/") ? url.replace(/([?&]w=)\d+/, `$1${COVER_WIDTH}`) : url;
   // 0.5.7: the bundled release files are JLX1 (state/jlx.js).

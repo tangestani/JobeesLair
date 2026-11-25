@@ -163,8 +163,8 @@ import { formatBytes } from '../state/size.js';
   function preferredRelease(releases) {
     return releases.map(ranked).sort(compare)[0]?.index ?? 0;
   }
-  // 0.5.1: whether a source runs on this console as it is (release-sets.js compatible1360: a dump, an image or a
-  // PS5 fake package), leaving out add-ons, backports, links found gone and sources listed as unavailable.
+  // 0.5.1: whether a source runs on this console as it is (release-sets.js compatible1360: a dump or image
+  // ShadowMount+ mounts), leaving out add-ons, backports, links found gone and sources listed as unavailable.
   // `readyLinks`: how many of a game's sources do.
   function runsHere(release) {
     if (!release || release.unavailableReason || release.linkHealth?.status === "dead" || isDlc(release) || isBackport(release)) return false;
