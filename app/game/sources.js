@@ -148,8 +148,8 @@ import { formatBytes } from '../state/size.js';
       group > GROUP_RANK.browser && group < GROUP_RANK.unavailable ? 1 : 0,
       standing === "hard" ? 1 : 0,
       release.linkHealth?.status === "unreachable" ? 1 : 0,
-      // What ShadowMount+ mounts before a package, which the console has to install (twice the space).
-      release.dumpType === "fpkg" ? 1 : 0,
+      // A package first: an installed fpkg plays best, better than what ShadowMount+ mounts.
+      release.dumpType === "fpkg" ? 0 : 1,
       isImage(release) ? 0 : 1,
       hostRank(release),
       standing === "unknown" ? 1 : 0,

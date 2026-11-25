@@ -2657,13 +2657,13 @@ test('release types: images, folder dumps and backports are ready; an FPKG is in
 });
 
 
-test('ranking: a dump ShadowMount+ mounts is recommended over a PS5 FPKG, even from a faster host', () => {
-  const fpkg = { id: 'f', provider: 'archive.org', url: 'https://archive.org/download/x/PPSA01234-game.pkg', format: 'pkg', filename: 'PPSA01234-game.pkg', label: 'USA Base (v01.00) - Direct' };
-  const dump = { id: 'd', provider: 'mirror.example', url: 'https://mirror.example/Game.rar', format: 'rar', filename: 'Game.rar', label: 'USA Folder Dump (v01.00) - Direct' };
+test('ranking: a PS5 FPKG is recommended over a dump ShadowMount+ mounts, even from a slower host (an installed fpkg plays best)', () => {
+  const fpkg = { id: 'f', provider: 'mirror.example', url: 'https://mirror.example/PPSA01234-game.pkg', format: 'pkg', filename: 'PPSA01234-game.pkg', label: 'USA Base (v01.00) - Direct' };
+  const dump = { id: 'd', provider: 'archive.org', url: 'https://archive.org/download/x/Game.rar', format: 'rar', filename: 'Game.rar', label: 'USA Folder Dump (v01.00) - Direct' };
   const typed = withReleaseTypes([fpkg, dump], 'ps5');
-  assert.equal(preferredRelease([fpkg, dump]), 0, 'without types Archive.org would come first');
-  assert.equal(preferredRelease(typed), 1);
-  assert.equal(preferredRelease(withReleaseTypes([fpkg], 'ps5')), 0, 'the only source is still offered');
+  assert.equal(preferredRelease([fpkg, dump]), 1, 'without types Archive.org would come first');
+  assert.equal(preferredRelease(typed), 0);
+  assert.equal(preferredRelease(withReleaseTypes([dump], 'ps5')), 0, 'without an fpkg the dump is still offered');
 });
 
 test('release cache: every release carries its type, the platform from the title ID', () => {

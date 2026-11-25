@@ -80,7 +80,7 @@ assert.ok(has(picker.out, /^slow\.example\.org didn't answer\. It may be down fo
 assert.deepEqual(rowBadges(picker.out, 'pkg.example'), ['FPKG'], 'a PS5 FPKG: its pill, no Ready (installed first), no firmware warning');
 assert.ok(has(picker.out, /^pkg\.example$/), 'no firmware warning under it');
 assert.ok(has(picker.out, /^Folder Dump$/) && has(picker.out, /^Backport$/));
-assert.equal(picker.out[picker.out.indexOf('Recommended') + 1], '.exfat Image', 'Recommended sits on a working image');
+assert.equal(picker.out[picker.out.indexOf('Recommended') + 1], 'FPKG', 'Recommended sits on the PS5 fpkg (an installed fpkg plays best)');
 // The link the check found gone stays listed, as in 0.1.0: tagged, last of its section, never "Recommended".
 assert.deepEqual(rowBadges(picker.out, 'archive.org'), ['.exfat Image', '13.60 Ready', 'Broken link']);
 assert.ok(has(picker.out, /^archive\.org · the file is gone \(HTTP 404\)$/));
