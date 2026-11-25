@@ -3,7 +3,7 @@
 // MODIFIED: Vikingfile is a browser source again (its file link captured from the console's browser), and a
 // browser source ranks by how captures on its host fare on this console (state/capture-hosts.js).
 
-import { activeService, serviceName } from '../state/debrid.js';
+import { activeService, debridSupports, heldByTorBox, serviceName } from '../state/debrid.js';
 import { t } from '../i18n/core.js';
 import { hostStanding } from '../state/capture-hosts.js';
 import { sourceKind } from '../state/download-sources.js';
@@ -128,7 +128,19 @@ import { formatBytes } from '../state/size.js';
     if (!named.length) return null;
     return isBackport(release) ? Math.min(...named) : Math.max(...named);
   }
-  var hostRank = ({ provider }) => isCdnProvider(provider) ? 0 : provider.toLowerCase() === "archive.org" ? 1 : provider.toLowerCase() === "mediafire" ? 2 : 3;
+  // The hosts by speed, in a fixed order (not measured): a file TorBox already holds ("TorBox Instant"), then
+  // Overdrive CDN and a host link the debrid service set up can fetch (it downloads at the service's speed,
+  // without the host's waits and caps), then archive.org, MediaFire, the rest. A torrent the service does not
+  // hold yet is not fast: it has to come from peers first.
+  function hostRank(release) {
+    if (heldByTorBox(release) === true) return 0;
+    if (isCdnProvider(release.provider) || access(release) !== "torrent" && debridSupports(release)) return 1;
+    const provider = String(release.provider || "").toLowerCase();
+    return provider === "archive.org" ? 2 : provider === "mediafire" ? 3 : 4;
+  }
+  // Whether the app sends a source through the debrid service by itself: one it can fetch that would otherwise
+  // need the console's browser, a magnet, or a host page (free hosts wait and cap; the service does not).
+  var throughDebrid = (release) => Boolean(release) && ["browser", "torrent", "page"].includes(access(release)) && debridSupports(release);
   // The order sources are offered in: the game before its add-ons and backports, what can be had before
   // what cannot, a link that answers now before one that just failed to and one the check found gone after
   // both (state/link-health.js), a browser host whose captures fail here with those, a fake package
@@ -146,7 +158,8 @@ import { formatBytes } from '../state/size.js';
       release.linkHealth?.status === "dead" ? 1 : 0,
       // 0.5.1: a torrent without a debrid key is no link anyone here can use yet: after everything else.
       group > GROUP_RANK.browser && group < GROUP_RANK.unavailable ? 1 : 0,
-      standing === "hard" ? 1 : 0,
+      // A browser host whose captures fail matters only when the browser is used, not through the debrid service.
+      standing === "hard" && !debridSupports(release) ? 1 : 0,
       release.linkHealth?.status === "unreachable" ? 1 : 0,
       // A package first: an installed fpkg plays best, better than what ShadowMount+ mounts.
       release.dumpType === "fpkg" ? 0 : 1,
@@ -192,4 +205,4 @@ import { formatBytes } from '../state/size.js';
     return sections.filter((section) => section.items.length);
   }
 
-export { captureStanding, describeSource, fallbacks, isBackport, isCdnProvider, isDlc, isImage, labelFirmware, preferredRelease, readyLinks, runsHere, sourceOrder, sourceSections };
+export { captureStanding, describeSource, fallbacks, isBackport, isCdnProvider, isDlc, isImage, labelFirmware, preferredRelease, readyLinks, runsHere, sourceOrder, sourceSections, throughDebrid };

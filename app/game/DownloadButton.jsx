@@ -10,7 +10,7 @@ import { Choice, ReadyPick, TextAction } from './Choice.jsx';
 import { DISABLED, DownloadLabel, statusLine } from './DownloadLabel.jsx';
 import { MoreOptions, ProblemNote } from './DownloadProblem.jsx';
 import { canDownload, spaceAdvice, spaceNeeded } from './releases.js';
-import { captureStanding, describeSource, fallbacks, isBackport, isCdnProvider, isDlc, labelFirmware, preferredRelease, runsHere, sourceOrder } from './sources.js';
+import { captureStanding, describeSource, fallbacks, isBackport, isCdnProvider, isDlc, labelFirmware, preferredRelease, runsHere, sourceOrder, throughDebrid } from './sources.js';
 import { useDownload } from './useDownload.js';
 import { useFreeSpace } from './useFreeSpace.js';
 import { useShadowMount } from './useShadowMount.js';
@@ -60,10 +60,10 @@ import { colors, radius } from '../ui/colors.js';
         return index >= 0 ? { index, debrid: /~(?:torbox|alldebrid)$/.test(id) } : null;
       }).find(Boolean);
       if (owned2) return owned2;
-      // With TorBox set up, a browser-only source it can take goes through TorBox from the start: no browser.
+      // With TorBox set up, a source it can take goes through TorBox from the start: a browser-only one (no
+      // browser), a torrent (no other way), and a host page (no waits or speed caps). sources.js throughDebrid.
       const index = preferredRelease(releases);
-      // 0.5.1: a torrent too, which has no other way.
-      return { index, debrid: Boolean(releases[index]) && ["browser", "torrent"].includes(describeSource(releases[index]).group) && debridSupports(releases[index]) };
+      return { index, debrid: throughDebrid(releases[index]) };
     });
     const [selected, setSelected] = (0, useState)(initial.index);
     // Whether the picked source goes through TorBox (its TorBox button in the source list).
@@ -113,6 +113,7 @@ import { colors, radius } from '../ui/colors.js';
       const same = from.toLowerCase() === to.toLowerCase();
       setSwitched(t2(health === "dead" ? same ? "links.switchedSameHost" : "links.switched" : same ? "links.switchedSlowSameHost" : "links.switchedSlow", { from, to }));
       setSelected(best);
+      setViaDebrid(throughDebrid(next));
     }, [releases]);
     const free = useFreeSpace(roots, download.status, !job2);
     const need = spaceNeeded(release, roots[storage]);
