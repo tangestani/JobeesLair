@@ -10,10 +10,9 @@ import { COVER, HERO, LOGO } from './art.js';
 import { canDownload } from './releases.js';
 import { readyLinks } from './sources.js';
 import { useHealthyReleases } from '../state/links.js';
-import { deviceFacts } from '../state/device.js';
 import { SPAN_MAX, fitBytes } from '../i18n/fit.js';
 import { latin, useLocale, useT } from '../i18n/index.js';
-import { genreLabel, listedId, readyLabel } from '../state/catalog.js';
+import { genreLabel, listedId } from '../state/catalog.js';
 import { useStoreActions, useWishlist } from '../state/store.jsx';
 import { Button2 } from '../ui/Button.jsx';
 import { Cover } from '../ui/Cover.jsx';
@@ -28,19 +27,14 @@ import { Icon } from '../ui/Icon.jsx';
   var GREEN = "#4ade80";
   var PILL_TEXT = { fontFamily: "Exo2", fontSize: 19, fontWeight: 600, lineHeight: 26 };
   // 0.5.1: whether the game has a download that runs on this console, said on the page at once, before any
-  // list is opened: "13.60 Ready · 3 links" in green (or "Ready for 9.60"), else "No 13.60 Ready links".
+  // list is opened: "13.60 Ready · 3 links" in green, else "No 13.60 Ready links".
   function ReadyPill({ game }) {
     const t2 = useT();
     // With what the link check found (state/links.js), as the button's own list: a link found gone is not counted.
     const releases = useHealthyReleases(game.releases || []);
-    let count = 0, firmware = "";
-    try {
-      firmware = deviceFacts().firmware;
-    } catch {
-    }
-    count = readyLinks(releases, firmware);
+    const count = readyLinks(releases);
     if (!count && !canDownload(game)) return null;
-    const label = readyLabel(t2("release.compat.ready"));
+    const label = t2("release.compat.ready");
     const tone = count ? GREEN : colors.muted;
     return jsx(View, { style: { borderRadius: radius.xs, borderWidth: 1, borderColor: tone, paddingHorizontal: 10, paddingVertical: 2 }, children: jsx(Text, { style: { ...PILL_TEXT, color: tone }, children: count ? t2("game.readyLinks", { label, count }) : t2("game.noReadyLinks", { label }) }) });
   }

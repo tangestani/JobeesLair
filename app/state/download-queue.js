@@ -14,7 +14,7 @@ import { t } from '../i18n/core.js';
 import { archivePassword } from './archive-password.js';
 import { diagnoseLaunch, launchOutcomes } from './launch-diagnosis.js';
 import { fakelibState } from './fakelib.js';
-import { consoleFirmware, newerFirmware, ps5FakePackagesLaunch, titleRequirement } from './firmware.js';
+import { consoleFirmware, newerFirmware, titleRequirement } from './firmware.js';
 import { releaseType } from './release-sets.js';
 import { reportLink, reportOutcome } from './link-health.js';
 import { BrowserRequired, RESOLVED_KINDS, archiveRefusal, cancellation, createSourceResolver, sourceKind, webURL } from './download-sources.js';
@@ -717,18 +717,6 @@ import { MARGIN2, spaceShortfall, stillNeeded } from './space.js';
       if (job2.release.parts && /^Incomplete RAR archive or missing volume\.$/.test(reason)) return sharedLink(job2, job2.release.parts.at(-1)?.sources?.[0]);
       return null;
     }
-    // 0.5.5 (GitHub issue #2): a PS5 package from a source that never said it was one (so the game page gave no
-    // warning) installs whole on firmware above 11.60 and then won't start. Its install waits for the player, with
-    // the reason; Install still starts it.
-    function heldPackage(job2) {
-      if (ps5FakePackagesLaunch(firmware()) !== false || releaseType(job2.release, "ps5").dumpType === "fpkg") return false;
-      const names = (job2.packages ?? [job2.downloadDestination || job2.artifact.destination]).map((path) => path.slice(path.lastIndexOf("/") + 1));
-      const ps5 = names.some((name) => /PPSA\d{5}/i.test(name) || !/CUSA\d{5}/i.test(name) && /^PPSA/i.test(job2.titleId || ""));
-      if (!ps5) return false;
-      console.log(`[download-queue] ${job2.id}: a PS5 package on firmware ${firmware()}; its install waits for the player`);
-      job2.message = t("downloads.fpkgHeld");
-      return true;
-    }
     async function execute(job2) {
       let task;
       let unsubscribe;
@@ -880,7 +868,7 @@ import { MARGIN2, spaceShortfall, stillNeeded } from './space.js';
         if ((job2.artifact.nextAction === "extraction-required" || job2.output) && archives) await extract(job2, [job2.downloadDestination]);
         delete job2.reresolved;
         notifications.show(t("downloads.notice.complete"), job2.title);
-        if (job2.state === "installer-required" && canInstall() && !heldPackage(job2)) await install(job2);
+        if (job2.state === "installer-required" && canInstall()) await install(job2);
       } catch (error2) {
         if (noRoom) error2 = noRoom;
         console.log("[download-queue] transfer stopped:", error2.message);
@@ -1636,7 +1624,7 @@ import { MARGIN2, spaceShortfall, stillNeeded } from './space.js';
       if (job2.state === "pausing") return;
       await extract(job2, job2.parts.map((part) => part.destination), streamed);
       notifications.show(t("downloads.notice.complete"), job2.title);
-      if (job2.state === "installer-required" && canInstall() && !heldPackage(job2)) await install(job2);
+      if (job2.state === "installer-required" && canInstall()) await install(job2);
     }
     function lostPartial(job2) {
       const kept = (path) => fs.exists(path) || fs.exists(`${path}.part`);

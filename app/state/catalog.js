@@ -18,33 +18,11 @@ import { ratings as bundledRatings } from '../data/ratings.js';
 import { createReleaseCache } from './release-cache.js';
 import { readJlx } from './jlx.js';
 import { KINDS, gameFormats, ready1360 } from './formats.js';
-import { deviceFacts } from './device.js';
-import { consoleFirmware, firmwareText, ps5FakePackagesLaunch } from './firmware.js';
 import { FileSystem, Image } from '@ps5-react/core';
 import { PS4 } from './ps4.js';
 
-  // 0.5.1: "Ready" is for this console's firmware. At 11.60 or lower PS5 fake packages start too, so a PS5 game
-  // with one is ready there, and the label names that firmware ("Ready for 9.60"); above, it is 13.60's rule and
-  // label, as before. Unknown firmware reads as 13.60.
-  // Read once the console has said its firmware (it cannot change while the app runs): readyHere asks for
-  // every game of every pass.
-  var lowKnown;
-  var lowFirmware = () => {
-    if (lowKnown !== void 0) return lowKnown;
-    try {
-      const text = deviceFacts().firmware;
-      if (!text) return null;
-      lowKnown = ps5FakePackagesLaunch(text) === true ? firmwareText(consoleFirmware(text)) : null;
-      return lowKnown;
-    } catch {
-      return null;
-    }
-  };
-  var readyHere = (game) => ready1360(game.formats ?? []) || Boolean(lowFirmware()) && game.platform === "ps5" && (game.formats ?? []).includes("fpkg");
-  var readyLabel = (text) => {
-    const low = lowFirmware();
-    return low ? text.replace("13.60", low) : text;
-  };
+  // "Ready": a dump or image ShadowMount+ mounts, or a PS5 fake package (they launch on any jailbroken firmware).
+  var readyHere = (game) => ready1360(game.formats ?? []) || game.platform === "ps5" && (game.formats ?? []).includes("fpkg");
   var COVER_WIDTH = 440;
   var coverSize = (url) => url.startsWith("https://image.api.playstation.com/") ? url.replace(/([?&]w=)\d+/, `$1${COVER_WIDTH}`) : url;
   // 0.5.7: the bundled release files are JLX1 (state/jlx.js).
@@ -307,7 +285,7 @@ import { PS4 } from './ps4.js';
   function optionLabel(option) {
     if (!option.label) return option.name;
     const text = t(option.label);
-    return readyLabel(text === option.label ? option.name : text);
+    return text === option.label ? option.name : text;
   }
   var facetLabel = (key, value) => {
     const option = FACETS.find((facet) => facet.key === key).options.find((candidate) => candidate.value === value);
@@ -383,4 +361,4 @@ import { PS4 } from './ps4.js';
   }
   var formatDate3 = (iso) => iso ? formatDate2(iso) : "\u2014";
 
-export { CDN_HOST, FACETS, NO_FILTERS, SORTS, activeCount, bundledIndex, editionsOf, facetCounts, facetLabel, facetTitle, featureLabel, filterGames, formatDate3, fromArchive, genreLabel, genres, getGame, listedId, onCdn, oneEach, optionLabel, otherThan, ratingScore, readyHere, readyLabel, relatedGames, sortGames, sortLabel, summaryOf, toggleValue, topRated, warmCovers };
+export { CDN_HOST, FACETS, NO_FILTERS, SORTS, activeCount, bundledIndex, editionsOf, facetCounts, facetLabel, facetTitle, featureLabel, filterGames, formatDate3, fromArchive, genreLabel, genres, getGame, listedId, onCdn, oneEach, optionLabel, otherThan, ratingScore, readyHere, relatedGames, sortGames, sortLabel, summaryOf, toggleValue, topRated, warmCovers };

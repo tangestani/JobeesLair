@@ -7,11 +7,11 @@ import { useMemo, useState } from 'react';
 import { VersionFace } from './VersionSheet.jsx';
 import { captureStanding, describeSource, isCdnProvider, preferredRelease, sourceSections } from './sources.js';
 import { useT } from '../i18n/index.js';
-import { getGame, readyLabel } from '../state/catalog.js';
+import { getGame } from '../state/catalog.js';
 import { activeService, debridSupports, heldByTorBox, serviceName, useTorBoxInstant } from '../state/debrid.js';
 import { downloadQueue } from '../state/downloads.js';
 import { deviceFacts } from '../state/device.js';
-import { backportAdvice, ps5FakePackagesLaunch } from '../state/firmware.js';
+import { backportAdvice } from '../state/firmware.js';
 import { useHealthyReleases, useLinkCheck } from '../state/links.js';
 import { CdnAura, CdnSpark } from '../ui/CdnAura.jsx';
 import { FocusRing } from '../ui/FocusRing.jsx';
@@ -85,31 +85,25 @@ import { FileSystem, Text, View, useIsFocused } from '@ps5-react/core';
     const type = release.dumpType;
     if (type === "image") return { text: t2(`release.type.${release.imageFormat ?? "image"}`), ...PILL };
     if (type === "backport") return { text: t2(release.platform === "ps4" ? "release.type.ps4Backport" : "release.type.backport"), ...PILL };
-    // A PS5 package's compatibility badge already says FPKG ("FPKG (<=11.60)").
-    if (type === "fpkg" && release.compatible1360 === false) return null;
     if (type === "folder" || type === "fpkg") return { text: t2(`release.type.${type}`), ...PILL };
     return null;
   }
-  // Whether it runs on 13.60: green "13.60 Ready" for what ShadowMount+ mounts (dumps, images, backports); a
-  // PS5 fake package is "FPKG (<=11.60)", amber unless this console is at 11.60 or below. Nothing when
-  // not known (a PS4 package, an archive that does not say what it holds).
-  function compatBadge(t2, release, launches) {
+  // Whether it runs: green "13.60 Ready" for what ShadowMount+ mounts (dumps, images, backports) and a PS5
+  // fake package. Nothing when not known (a PS4 package, an archive that does not say what it holds).
+  function compatBadge(t2, release) {
     // A PS4 backport keeps its pill but not the green badge: whether a console needs one is the backport
     // section's own advice, and "13.60 Ready" beside it read as a recommendation.
     if (release.dumpType === "backport" && release.platform === "ps4") return null;
-    if (release.compatible1360 === true) return { text: readyLabel(t2("release.compat.ready")), ink: GREEN, line: GREEN };
-    // 0.5.1: at 11.60 or lower a PS5 fake package starts, so it is as ready there as an image ("Ready for 9.60").
-    if (release.compatible1360 === false) return launches === true ? { text: readyLabel(t2("release.compat.ready")), ink: GREEN, line: GREEN } : { text: t2("release.compat.fpkg"), ink: AMBER, line: AMBER };
+    if (release.compatible1360 === true) return { text: t2("release.compat.ready"), ink: GREEN, line: GREEN };
     return null;
   }
   // A row's second line: where from, or why to think twice (gone, not answering, won't launch here).
-  function rowDetail(t2, release, detail, host, launches) {
+  function rowDetail(t2, release, detail, host) {
     if (release.linkHealth?.status === "dead") return deadDetail(t2, release, host);
     if (release.linkHealth?.status === "unreachable") {
       const part = release.linkHealth.part;
       return part ? t2("links.unreachable.partDetail", { host, part: String(part) }) : t2("links.unreachable.detail", { host });
     }
-    if (release.compatible1360 === false && launches !== true) return [detail, t2("release.fpkg.detail")].filter(Boolean).join(" \xB7 ");
     return detail;
   }
   // What "Check link health" says under its name: what it does, how far it got, or what it found.
@@ -162,7 +156,6 @@ import { FileSystem, Text, View, useIsFocused } from '@ps5-react/core';
   }
   function Section2({ group, items, selected, recommended, revealed, onPick, onDebrid, tag }) {
     const t2 = useT();
-    const launches = ps5FakePackagesLaunch(deviceFacts().firmware);
     const { title, icon } = SECTION[group];
     const note = group === "torrent" && !(onDebrid && activeService()) ? "sources.section.torrentNeeds" : SECTION[group].note;
     return /* @__PURE__ */ (0, jsxs)(View, { style: { gap: 6 }, children: [
@@ -188,13 +181,13 @@ import { FileSystem, Text, View, useIsFocused } from '@ps5-react/core';
           {
             icon,
             name,
-            detail: gone ? deadDetail(t2, release, host) : rowDetail(t2, release, detail2, host, launches),
+            detail: gone ? deadDetail(t2, release, host) : rowDetail(t2, release, detail2, host),
             size,
             narrow: torbox,
             cdn: !gone && isCdnProvider(release.provider),
             recommended: !gone && index === recommended && group !== "browser" && release.linkHealth?.status !== "dead",
             current: !gone && index === selected,
-            badges: [typePill(t2, release), gone ? null : compatBadge(t2, release, launches), linkBadge(t2, release, group), gone ? null : captureBadge(t2, release), torbox || viaDebrid ? instantBadge(t2, release) : null]
+            badges: [typePill(t2, release), gone ? null : compatBadge(t2, release), linkBadge(t2, release, group), gone ? null : captureBadge(t2, release), torbox || viaDebrid ? instantBadge(t2, release) : null]
           }
         ) }, torbox ? "row" : release.id);
         if (!torbox) return face;

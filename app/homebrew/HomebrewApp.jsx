@@ -16,8 +16,6 @@ import { ShotViewer } from '../game/ShotViewer.jsx';
 import { LATIN_IN_RTL, latin, useLocale, useT } from '../i18n/index.js';
 import { formatDate3 } from '../state/catalog.js';
 import { isoDate } from '../state/clock.js';
-import { deviceFacts } from '../state/device.js';
-import { ps5FakePackagesLaunch } from '../state/firmware.js';
 import { roleOf } from '../state/homebrew-index.js';
 import { homebrew, useHomebrewStatus } from '../state/homebrew-store.js';
 import { useNavActions } from '../state/nav.jsx';
@@ -61,8 +59,7 @@ import { AnimatePresence, FocusScope, Image, Linking, Platform, ScrollView, Text
     const role = roleOf(file);
     if (role === "app") return t2("homebrew.does.app");
     if (role === "payload") return t2("homebrew.does.payload");
-    const launches = ps5FakePackagesLaunch(deviceFacts().firmware);
-    return launches === false ? t2("homebrew.does.packageOld") : t2("homebrew.does.package");
+    return t2("homebrew.does.package");
   }
   // Removes an app and says how it went, once it has: 0.5.2, with where what it saved was kept, if it was.
   function removeApp(store, app, record, keep, t2, onMessage) {

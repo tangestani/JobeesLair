@@ -2633,22 +2633,21 @@ test('boot confirmation: the installer starts once, from Boot, before the startu
 // ---- 0.3.0 beta 1: what a release is for a 13.60 console (release-sets.js releaseType) ----
 const { releaseType, withReleaseTypes } = await load('app/state/release-sets.js');
 const { createReleaseCache } = await load('app/state/release-cache.js');
-const { ps5FakePackagesLaunch } = await load('app/state/firmware.js');
 
-test('release types: images, folder dumps and backports are 13.60 ready; a PS5 FPKG is not; FFPKG is never mistaken for FPKG', () => {
+test('release types: images, folder dumps, backports and a PS5 FPKG are ready; FFPKG is never mistaken for FPKG', () => {
   const type = (release, platform = 'ps5') => { const t = releaseType(release, platform); return [t.dumpType, t.imageFormat, t.compatible1360]; };
   assert.deepEqual(type({ format: 'exfat', filename: 'Game.exfat' }), ['image', 'exfat', true]);
   assert.deepEqual(type({ format: 'ffpkg', filename: 'Game.ffpkg' }), ['image', 'ffpkg', true]);
   assert.deepEqual(type({ format: 'ffpfsc', filename: 'Game.ffpfsc' }), ['image', 'ffpfs', true]);
-  assert.deepEqual(type({ format: 'pkg', filename: 'PPSA01234-game.pkg' }), ['fpkg', null, false], 'PS5: installs, does not launch above 11.60');
+  assert.deepEqual(type({ format: 'pkg', filename: 'PPSA01234-game.pkg' }), ['fpkg', null, true], 'PS5: launches on any jailbroken firmware');
   assert.deepEqual(type({ format: 'pkg', filename: 'CUSA01234-game.pkg' }, 'ps4'), ['fpkg', null, null], 'PS4: not confirmed either way');
   assert.deepEqual(type({ format: 'rar', label: 'USA Folder Dump - Direct', filename: 'Game.rar' }), ['folder', null, true]);
   assert.deepEqual(type({ format: 'rar', label: 'USA Base - Direct', url: 'https://h.example/Game_ShadowMount.rar', filename: 'x.rar' }), ['folder', null, true]);
   assert.deepEqual(type({ format: 'zip', filename: 'Game.exfat.zip' }), ['image', 'exfat', true], 'an archive of an image');
   assert.deepEqual(type({ format: 'rar', label: 'USA FFPKG - Direct', filename: 'Game.rar' }), ['image', 'ffpkg', true], 'FFPKG is an image');
   assert.deepEqual(type({ format: 'rar', filename: 'Game.ffpkg.rar' }), ['image', 'ffpkg', true]);
-  assert.deepEqual(type({ format: 'rar', label: 'USA Base FPKG - Direct', filename: 'Game.rar' }), ['fpkg', null, false]);
-  assert.deepEqual(type({ format: 'rar', filename: 'Game.pkg.rar' }), ['fpkg', null, false]);
+  assert.deepEqual(type({ format: 'rar', label: 'USA Base FPKG - Direct', filename: 'Game.rar' }), ['fpkg', null, true]);
+  assert.deepEqual(type({ format: 'rar', filename: 'Game.pkg.rar' }), ['fpkg', null, true]);
   assert.deepEqual(type({ format: 'zip', label: 'USA Backport (v01.10) - Direct', filename: 'Game-Backport.zip' }, 'ps4'), ['backport', null, true]);
   assert.equal(releaseType({ format: 'zip', label: 'USA Backport (v01.10)' }, 'ps4').platform, 'ps4');
   assert.deepEqual(type({ format: 'rar', filename: 'Game.rar' }), ['unknown', null, null], 'nothing says: nothing claimed');
@@ -2657,16 +2656,8 @@ test('release types: images, folder dumps and backports are 13.60 ready; a PS5 F
   assert.deepEqual(type({ format: 'exfat', filename: 'Game%20exFAT.exfat' }), ['image', 'exfat', true]);
 });
 
-test('firmware: PS5 fake packages launch up to 11.60 only', () => {
-  assert.equal(ps5FakePackagesLaunch('13.60'), false);
-  assert.equal(ps5FakePackagesLaunch('12.00'), false);
-  assert.equal(ps5FakePackagesLaunch('11.60'), true);
-  assert.equal(ps5FakePackagesLaunch('11.0'), true);
-  assert.equal(ps5FakePackagesLaunch('4.03'), true);
-  assert.equal(ps5FakePackagesLaunch(null), null, 'unknown firmware: not claimed');
-});
 
-test('ranking: a source that runs on 13.60 is recommended over a PS5 FPKG, even from a faster host', () => {
+test('ranking: a dump ShadowMount+ mounts is recommended over a PS5 FPKG, even from a faster host', () => {
   const fpkg = { id: 'f', provider: 'archive.org', url: 'https://archive.org/download/x/PPSA01234-game.pkg', format: 'pkg', filename: 'PPSA01234-game.pkg', label: 'USA Base (v01.00) - Direct' };
   const dump = { id: 'd', provider: 'mirror.example', url: 'https://mirror.example/Game.rar', format: 'rar', filename: 'Game.rar', label: 'USA Folder Dump (v01.00) - Direct' };
   const typed = withReleaseTypes([fpkg, dump], 'ps5');
@@ -2683,7 +2674,7 @@ test('release cache: every release carries its type, the platform from the title
   const cache = createReleaseCache((file) => JSON.stringify(files[file]));
   const [ps5] = cache('data/releases/PPSA01234.json');
   const [ps4] = cache('data/releases/CUSA01234.json');
-  assert.deepEqual([ps5.dumpType, ps5.compatible1360, ps5.platform], ['fpkg', false, 'ps5']);
+  assert.deepEqual([ps5.dumpType, ps5.compatible1360, ps5.platform], ['fpkg', true, 'ps5']);
   assert.deepEqual([ps4.dumpType, ps4.compatible1360, ps4.platform], ['fpkg', null, 'ps4']);
 });
 
@@ -3538,7 +3529,7 @@ test("an archive of packages installs the game's first and its backport's last; 
   const packages = installer({ 'Game-backport-4.xx.pkg': ['The console refused the package.'] });
   const archives = extractor(fs, { 'Backport/Game-backport-4.xx.pkg': 50, 'Game.pkg': 900 });
   const queue = queueWith({ fs, downloads: engine(fs), archives, packages });
-  // A PS4 game's (0.5.5: a PS5 game's package from an archive waits on Install above 11.60, below).
+  // A PS4 game's (0.5.5: a PS5 game's package from an archive installs by itself too, below).
   const ps4Game = { ...game, id: 'CUSA01234', titleId: 'CUSA01234' };
   const job = await settle(queue, queue.enqueue(ps4Game, image('Game.zip', 500), '/data'));
   assert.equal(job.state, 'installed', job.error);
@@ -3546,23 +3537,15 @@ test("an archive of packages installs the game's first and its backport's last; 
   assert.ok(!fs.exists('/data/downloads/archives/Game.zip'), 'the archive goes once it is unpacked');
 });
 
-test('a PS5 package from a source that never said so waits on Install above 11.60, with the reason; at 11.00 it installs (0.5.5, issue #2)', async () => {
-  const fs = memoryFs();
-  const packages = installer();
-  const queue = queueWith({ fs, downloads: engine(fs), archives: extractor(fs, { 'Game.pkg': 900 }), packages });
-  const id = queue.enqueue(game, image('Game.zip', 500), '/data');
-  let job = await settle(queue, id);
-  assert.equal(job.state, 'installer-required');
-  assert.equal(job.message, en['downloads.fpkgHeld']);
-  assert.deepEqual(packages.installed, [], 'not installed by itself');
-  queue.install(id);
-  job = await settle(queue, id);
-  assert.equal(job.state, 'installed', job.error);
-  const old = memoryFs();
-  const older = installer();
-  const low = queueWith({ fs: old, downloads: engine(old), archives: extractor(old, { 'Game.pkg': 900 }), packages: older, firmware: () => '11.00' });
-  job = await settle(low, low.enqueue(game, image('Game.zip', 500), '/data'));
-  assert.equal(job.state, 'installed', 'it starts there');
+test('a PS5 package from a source that never said so installs as soon as it is downloaded, on any firmware', async () => {
+  for (const firmware of ['13.60', '13.40', '11.00', null]) {
+    const fs = memoryFs();
+    const packages = installer();
+    const queue = queueWith({ fs, downloads: engine(fs), archives: extractor(fs, { 'Game.pkg': 900 }), packages, firmware: () => firmware });
+    const job = await settle(queue, queue.enqueue(game, image('Game.zip', 500), '/data'));
+    assert.equal(job.state, 'installed', `${firmware}: ${job.error}`);
+    assert.equal(packages.installed.length, 1, `${firmware}: installed by itself`);
+  }
 });
 
 test('an install cut off by closing the app waits on Install at the next launch, and Install finishes it', async () => {

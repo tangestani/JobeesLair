@@ -3,7 +3,7 @@
 //   folder    a folder dump ShadowMount+ mounts once unpacked
 //   exfat, ffpkg, ffpfs   a disk image of that kind; image: one whose kind nothing names
 //   backport  files laid over a game when it starts (not a game by itself)
-//   fpkg      a fake package: a PS5 one does not launch above 11.60, a PS4 one is not confirmed
+//   fpkg      a fake package: a PS5 one launches on any jailbroken firmware, a PS4 one is not confirmed
 // "Ready for 13.60" is a game with a folder dump or any disk image, what ShadowMount+ runs on 13.60.
 // The bundled games' kinds are worked out once by tools/catalog/formats.mjs (app/data/formats.js).
 

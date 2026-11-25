@@ -90,10 +90,10 @@ import { archivePassword } from './archive-password.js';
   //   folder   an extracted game folder ("folder dump"), mounted by ShadowMount+ once unpacked
   //   backport files ShadowMount+ lays over a game when it starts (download-queue.js puts them in
   //            homebrew/backports)
-  //   fpkg     a fake package, installed by the console's package service: a PS5 one installs but does not
-  //            launch on firmware above 11.60 (ps5-react docs/NATIVE-API.md); a PS4 one is not confirmed
+  //   fpkg     a fake package, installed by the console's package service: a PS5 one launches on any
+  //            jailbroken firmware (kstuff-dr); a PS4 one is not confirmed
   //   unknown  nothing says (an archive or file whose contents show only once downloaded)
-  // compatible1360: true for image, folder and backport, false for a PS5 fpkg, null when it cannot be said.
+  // compatible1360: true for image, folder, backport and a PS5 fpkg, null when it cannot be said.
   var IMAGE_FORMATS = /* @__PURE__ */ new Set(["exfat", "ffpkg", "ffpfs", "ffpfsc"]);
   var PACKAGE_FORMATS = /* @__PURE__ */ new Set(["pkg", "fpkg"]);
   // A word in a label or file name: anything but a letter or digit separates (file names join words with
@@ -132,7 +132,7 @@ import { archivePassword } from './archive-password.js';
     else if (IMAGE_WORDS.test(text)) dumpType = "image";
     else if (PACKAGE_WORDS.test(text)) dumpType = "fpkg";
     const system = platform || release.platform || null;
-    const compatible1360 = ["image", "folder", "backport"].includes(dumpType) ? true : dumpType === "fpkg" && system === "ps5" ? false : null;
+    const compatible1360 = ["image", "folder", "backport"].includes(dumpType) || dumpType === "fpkg" && system === "ps5" ? true : null;
     return { dumpType, imageFormat: dumpType === "image" ? imageFormatOf(format, text) : null, compatible1360, platform: system };
   }
   // The releases with their type (releaseType) set; `platform` is the game's ("ps5" or "ps4").

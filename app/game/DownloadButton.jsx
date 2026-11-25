@@ -16,12 +16,12 @@ import { useFreeSpace } from './useFreeSpace.js';
 import { useShadowMount } from './useShadowMount.js';
 import { formatPercent2 } from '../i18n/core.js';
 import { useT } from '../i18n/index.js';
-import { editionsOf, readyLabel } from '../state/catalog.js';
+import { editionsOf } from '../state/catalog.js';
 import { BUSY, COMPLETE } from '../state/download-queue.js';
 import { checkLinksNow, useHealthyReleases } from '../state/links.js';
 import { debridSource, debridSupports } from '../state/debrid.js';
 import { deviceFacts } from '../state/device.js';
-import { consoleFirmware, firmwareText, ps5FakePackagesLaunch } from '../state/firmware.js';
+import { consoleFirmware, firmwareText } from '../state/firmware.js';
 import { isPatchOnly } from '../state/release-sets.js';
 import { readinessOf, readinessText } from '../state/readiness.js';
 import { downloadQueue, driveName, freeBytes, storageRoots } from '../state/downloads.js';
@@ -198,11 +198,6 @@ import { colors, radius } from '../ui/colors.js';
     const detail2 = refused ? null : sizeless ? t2("download.soFar", { size: formatBytes(job2?.written || 0) }) : line;
     // How the chosen source's link stands, after its name and host: nothing while it answers or is unchecked.
     const linkTag = release?.linkHealth?.status === "dead" ? t2("links.badge.dead") : release?.linkHealth?.status === "unreachable" ? t2("links.badge.unreachable") : null;
-    // A PS5 fake package installs but won't launch above 11.60 (release-sets.js releaseType), so the line
-    // under the button says so, and a note explains it before anything is queued; the same for a host that
-    // is not answering. A console at 11.60 or below is not warned.
-    const wontLaunch = release?.compatible1360 === false && ps5FakePackagesLaunch(deviceFacts().firmware) !== true;
-    const compatTag = wontLaunch ? t2("release.compat.fpkg") : null;
     // The check found every source's link gone: said plainly, though the download can still be tried.
     const allGone = !job2 && release?.linkHealth?.status === "dead" && releases.every((item) => item.unavailableReason || item.linkHealth?.status === "dead");
     // A browser source on a host whose captures fail on the console (state/capture-hosts.js): said before
@@ -224,7 +219,7 @@ import { colors, radius } from '../ui/colors.js';
       if (!release.debrid && describeSource(release).group === "torrent") return { title: t2("tips.torrent.title"), action: t2("tips.torrent.action") };
       return null;
     })();
-    const sourceWarning = job2 || !release ? null : allGone ? { title: t2("links.allGone.title"), action: t2("links.allGone.action") } : wontLaunch ? { title: t2("release.fpkg.title"), action: t2("release.fpkg.action") } : hardHost ? { title: t2("capture.hard.title", { host: describeSource(release).host }), action: t2(debridSupports(release) ? "capture.hard.torbox" : "capture.hard.action") } : release.linkHealth?.status === "unreachable" ? { title: t2("links.unreachable.title", { host: describeSource(release).host }), action: t2("links.unreachable.action") } : tip;
+    const sourceWarning = job2 || !release ? null : allGone ? { title: t2("links.allGone.title"), action: t2("links.allGone.action") } : hardHost ? { title: t2("capture.hard.title", { host: describeSource(release).host }), action: t2(debridSupports(release) ? "capture.hard.torbox" : "capture.hard.action") } : release.linkHealth?.status === "unreachable" ? { title: t2("links.unreachable.title", { host: describeSource(release).host }), action: t2("links.unreachable.action") } : tip;
     const problem = browser && !error2 ? {
       title: step ? t2("download.browser.partTitle", step) : t2("download.browser.title"),
       action: t2("download.browser.action")
@@ -266,15 +261,14 @@ import { colors, radius } from '../ui/colors.js';
       checkLinks: () => checkLinksNow(game.id, game.releases || [])
     });
     // 0.5.1: up to three other sources that run on this console (a dump or image, release-sets.js
-    // compatible1360; a PS5 fake package too at 11.60 or lower), in view under the chosen one so nobody has to
+    // compatible1360, a PS5 fake package too), in view under the chosen one so nobody has to
     // open the list to find a "13.60 Ready" link; best first (sources.js order). Not add-ons, backports,
     // links found gone, nor sources that need the browser.
     const readyPicks = (0, useMemo)(() => {
       if (!choosing || !release) return [];
-      const firmware = deviceFacts().firmware;
-      return sourceOrder(releases).map((index) => ({ item: releases[index], index })).filter(({ item, index }) => index !== selected && runsHere(item, firmware) && describeSource(item).group !== "browser").slice(0, 3);
+      return sourceOrder(releases).map((index) => ({ item: releases[index], index })).filter(({ item, index }) => index !== selected && runsHere(item) && describeSource(item).group !== "browser").slice(0, 3);
     }, [releases, selected, choosing, release?.id]);
-    const readyTag = readyLabel(t2("release.compat.ready"));
+    const readyTag = t2("release.compat.ready");
     const readyKey = (index) => `download-ready:${game.id}:${index}`;
     const saved = job2?.written ? formatBytes(job2.written) : null;
     const removal = { icon: "x", label: t2("download.remove.label"), detail: t2("download.remove.detail"), onSelect: remove };
@@ -395,7 +389,7 @@ import { colors, radius } from '../ui/colors.js';
           // 0.5.1: "13.60 Ready" first when the chosen source runs here, so the page says so at a glance; then
           // what the gamer gets ("Disk image · USA v1.10"), where from and how big.
           // A warning (won't launch here, offline) right after the name: the line is cut to the button's width.
-          text: [runsHere(release, deviceFacts().firmware) ? readyTag : null, describeSource(release).name, compatTag, linkTag, describeSource(release).host, release.sizeBytes && formatBytes(release.sizeBytes)].filter(Boolean).join(" \xB7 ")
+          text: [runsHere(release) ? readyTag : null, describeSource(release).name, linkTag, describeSource(release).host, release.sizeBytes && formatBytes(release.sizeBytes)].filter(Boolean).join(" \xB7 ")
         }
       ) : null,
       ...readyPicks.map(({ item, index }) => /* @__PURE__ */ (0, jsx)(ReadyPick, { focusKey: readyKey(index), nextFocusDown: after(readyKey(index)), onPress: () => pick2(index, describeSource(item).group === "torrent"), tag: readyTag, text: [describeSource(item).name, describeSource(item).host, item.sizeBytes && formatBytes(item.sizeBytes)].filter(Boolean).join(" \xB7 ") }, readyKey(index))),

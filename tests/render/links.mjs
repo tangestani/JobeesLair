@@ -77,8 +77,8 @@ console.log(`--- source list (${picker.rendered} components)\n${picker.out.join(
 assert.deepEqual(rowBadges(picker.out, 'cdn.example.com'), ['.exfat Image', '13.60 Ready']);
 assert.deepEqual(rowBadges(picker.out, 'slow.example.org'), ['.exfat Image', '13.60 Ready', 'Offline'], 'the silent mirror is tagged');
 assert.ok(has(picker.out, /^slow\.example\.org didn't answer\. It may be down for a while\.$/));
-assert.deepEqual(rowBadges(picker.out, 'pkg.example'), ['FPKG (<=11.60)'], 'one badge, not FPKG twice');
-assert.ok(has(picker.out, /^pkg\.example · Needs firmware 11\.60 or lower\. On 13\.60, use a folder dump or ShadowMount\+ image$/), 'why, in place of a tooltip');
+assert.deepEqual(rowBadges(picker.out, 'pkg.example'), ['FPKG', '13.60 Ready'], 'a PS5 FPKG is ready on any jailbroken firmware');
+assert.ok(has(picker.out, /^pkg\.example$/), 'no firmware warning under it');
 assert.ok(has(picker.out, /^Folder Dump$/) && has(picker.out, /^Backport$/));
 assert.equal(picker.out[picker.out.indexOf('Recommended') + 1], '.exfat Image', 'Recommended sits on a working image');
 // The link the check found gone stays listed, as in 0.1.0: tagged, last of its section, never "Recommended".
@@ -100,13 +100,13 @@ assert.equal(shown[0].unavailableReason, undefined);
 assert.equal(shown[0].health, 'dead');
 assert.equal(shown[1].health, 'flaky');
 
-// The download button with the PS5 FPKG picked (the only source): the line under it and the note say why.
+// The download button with the PS5 FPKG picked (the only source): ready, nothing to warn about.
 const { DownloadButton } = await load('app/game/DownloadButton.jsx');
 const fpkgGame = { id: 'PPSA01234', titleId: 'PPSA01234', title: 'Test Game', platform: 'ps5', releases: [catalog[4]] };
 const button = texts({ type: DownloadButton, props: { game: fpkgGame, onDownloaded() {}, onRequestDialog() {} } });
 console.log(`--- download button, PS5 FPKG (${button.rendered} components)\n${button.out.join('\n')}`);
-assert.ok(has(button.out, /^Package · USA v1 · FPKG \(<=11\.60\) · pkg\.example/), 'right after the name, before the line is cut');
-assert.ok(has(button.out, /^This PS5 fake package won't launch on this console$/));
+assert.ok(has(button.out, /^13\.60 Ready · Package · USA v1 · pkg\.example/), 'leads with its Ready tag');
+assert.ok(!has(button.out, /won't launch/), 'no launch warning');
 const imageGame = { ...fpkgGame, releases: [catalog[2]] };
 const fine = texts({ type: DownloadButton, props: { game: imageGame, onDownloaded() {}, onRequestDialog() {} } });
 assert.ok(!has(fine.out, /won't launch|isn't answering/), 'nothing to warn about for a working image');

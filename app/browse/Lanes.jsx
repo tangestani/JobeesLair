@@ -11,7 +11,7 @@ import { GameRail } from './GameRail.jsx';
 import { featured } from './featured.js';
 import { games } from '../data/catalog.js';
 import { useT } from '../i18n/index.js';
-import { NO_FILTERS, fromArchive, oneEach, otherThan, ratingScore, readyHere, readyLabel, sortGames, topRated } from '../state/catalog.js';
+import { NO_FILTERS, fromArchive, oneEach, otherThan, ratingScore, readyHere, sortGames, topRated } from '../state/catalog.js';
 import { isoDate } from '../state/clock.js';
 import { useNavActions } from '../state/nav.jsx';
 import { useStoreActions } from '../state/store.jsx';
@@ -124,7 +124,7 @@ import { useEffect, useState } from 'react';
       setSort("relevance");
       focusLater("catalog:filters");
     };
-    return /* @__PURE__ */ (0, jsx)(Lane, { name: "ready", title: readyLabel(t2("browse.lane.ready")), list: READY, accent: READY_GREEN, count: READY_ALL.length, seeAll });
+    return /* @__PURE__ */ (0, jsx)(Lane, { name: "ready", title: t2("browse.lane.ready"), list: READY, accent: READY_GREEN, count: READY_ALL.length, seeAll });
   });
   var NewLane = (0, memo)(function NewLane2() {
     const t2 = useT();

@@ -6,7 +6,6 @@
 import { activeService, serviceName } from '../state/debrid.js';
 import { t } from '../i18n/core.js';
 import { hostStanding } from '../state/capture-hosts.js';
-import { ps5FakePackagesLaunch } from '../state/firmware.js';
 import { sourceKind } from '../state/download-sources.js';
 import { formatBytes } from '../state/size.js';
 
@@ -149,7 +148,8 @@ import { formatBytes } from '../state/size.js';
       group > GROUP_RANK.browser && group < GROUP_RANK.unavailable ? 1 : 0,
       standing === "hard" ? 1 : 0,
       release.linkHealth?.status === "unreachable" ? 1 : 0,
-      release.compatible1360 === false ? 1 : 0,
+      // What ShadowMount+ mounts in place before a package, which the console installs (twice the space).
+      release.dumpType === "fpkg" ? 1 : 0,
       isImage(release) ? 0 : 1,
       hostRank(release),
       standing === "unknown" ? 1 : 0,
@@ -163,16 +163,16 @@ import { formatBytes } from '../state/size.js';
   function preferredRelease(releases) {
     return releases.map(ranked).sort(compare)[0]?.index ?? 0;
   }
-  // 0.5.1: whether a source runs on this console as it is (release-sets.js compatible1360: a dump or image, and a
-  // PS5 fake package at 11.60 or lower), leaving out add-ons, backports, links found gone and sources listed as
-  // unavailable. `readyLinks`: how many of a game's sources do.
-  function runsHere(release, firmware) {
+  // 0.5.1: whether a source runs on this console as it is (release-sets.js compatible1360: a dump, an image or a
+  // PS5 fake package), leaving out add-ons, backports, links found gone and sources listed as unavailable.
+  // `readyLinks`: how many of a game's sources do.
+  function runsHere(release) {
     if (!release || release.unavailableReason || release.linkHealth?.status === "dead" || isDlc(release) || isBackport(release)) return false;
     // A torrent needs a debrid key before it is a link anyone here can use.
     if (access(release) === "torrent" && !activeService()) return false;
-    return release.compatible1360 === true || release.compatible1360 === false && ps5FakePackagesLaunch(firmware) === true;
+    return release.compatible1360 === true;
   }
-  var readyLinks = (releases, firmware) => (releases || []).filter((release) => runsHere(release, firmware)).length;
+  var readyLinks = (releases) => (releases || []).filter((release) => runsHere(release)).length;
   // 0.5.1: every source's index in the order they are offered (ranked above), best first.
   function sourceOrder(releases) {
     return releases.map(ranked).sort(compare).map(({ index }) => index);
