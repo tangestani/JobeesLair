@@ -131,11 +131,11 @@ import { formatBytes } from '../state/size.js';
   var hostRank = ({ provider }) => isCdnProvider(provider) ? 0 : provider.toLowerCase() === "archive.org" ? 1 : provider.toLowerCase() === "mediafire" ? 2 : 3;
   // The order sources are offered in: the game before its add-ons and backports, what can be had before
   // what cannot, a link that answers now before one that just failed to and one the check found gone after
-  // both (state/link-health.js), a browser host whose captures fail here with those, what runs
-  // on 13.60 before what is known not to (a PS5 fake package, release-sets.js releaseType), a disk image
-  // (which mounts as it is) before an archive or an unknown format (which can turn out to be an extracted
-  // folder dump), then the faster and healthier hosts, a browser host whose captures work before one not
-  // tried yet.
+  // both (state/link-health.js), a browser host whose captures fail here with those, a fake package
+  // (installed, it plays best) before anything else, a disk image (which mounts as it is) before an archive
+  // or an unknown format (which can turn out to be an extracted folder dump), then the hosts in a fixed
+  // order (hostRank: Overdrive CDN, archive.org, MediaFire, the rest; not measured) and the healthier ones, a
+  // browser host whose captures work before one not tried yet.
   var ranked = (release, index) => {
     // Only the group and the capture standing are needed here, not the whole described source.
     const group = groupRank(release);
