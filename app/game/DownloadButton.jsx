@@ -288,6 +288,21 @@ import { colors, radius } from '../ui/colors.js';
       onSelect: () => onRequestDialog({ kind: "diagnosis", title: game.title, jobId: job2.id }),
       next: true
     };
+    // An archive none of the known passwords opened: the player types the one it was published with, and the
+    // extraction runs again on the archive already on the drive (download-queue.js setArchivePassword).
+    const password = refused && job2 && /archive password/i.test(cause(error2)) && {
+      icon: "keyboard",
+      label: t2("download.password.label"),
+      detail: t2("download.password.detail"),
+      onSelect: () => onRequestDialog({
+        title: t2("download.password.label"),
+        detail: t2("download.password.dialogDetail"),
+        initial: "",
+        kind: "key",
+        submit: (value) => downloadQueue().setArchivePassword(job2.id, value)
+      }),
+      next: true
+    };
     const options = COMPLETE.includes(status) ? [diagnosis, removal, deletion].filter(Boolean) : recoverable ? [
       stale || refused ? null : {
         icon: "restart",
@@ -296,6 +311,7 @@ import { colors, radius } from '../ui/colors.js';
         onSelect: restart
       },
       removal,
+      password || null,
       releases.length > 1 ? {
         icon: "list",
         label: t2("download.otherSource.label"),

@@ -3602,6 +3602,34 @@ test('an archive whose source names no password opens with a known one: (DLPSGAM
   assert.equal(packages.installed.length, 1);
 });
 
+test('a password the player types opens an archive no known one did: tried first, and it installs', async () => {
+  const fs = memoryFs();
+  const packages = installer();
+  const base = extractor(fs, { 'Game.pkg': 900 });
+  const tried = [];
+  const archives = { ...base, extract(options) {
+    tried.push(options.password);
+    if (options.password !== 'my secret (pw)') return { subscribe: () => () => {}, done: Promise.reject(new Error('Archives.extract /data/x.rar: Incorrect RAR5 archive password.')), cancel() {} };
+    return base.extract(options);
+  } };
+  const queue = queueWith({ fs, downloads: engine(fs), archives, packages });
+  const id = queue.enqueue(game, image('Game.zip', 500), '/data');
+  let job = await settle(queue, id);
+  assert.equal(job.state, 'failed');
+  assert.match(job.error, /archive password/);
+  const known = tried.length;
+  queue.setArchivePassword(id, '  my secret (pw)  ');
+  job = await settle(queue, id);
+  assert.equal(job.state, 'installed', job.error);
+  assert.deepEqual(tried.slice(known), ['my secret (pw)'], 'the typed one first, trimmed');
+  assert.equal(packages.installed.length, 1);
+  const other = queueWith({ fs: memoryFs(), downloads: { requests: [], enqueue: () => ({ subscribe: () => () => {}, done: Promise.reject(new Error('HTTP 404')), cancel() {} }) }, archives, packages: installer() });
+  const otherId = other.enqueue(game, image('Game.zip', 500), '/data');
+  await settle(other, otherId);
+  other.setArchivePassword(otherId, 'x');
+  assert.equal(other.snapshot().find((item) => item.id === otherId).state, 'failed', 'only a password failure takes one');
+});
+
 test('an install cut off by closing the app waits on Install at the next launch, and Install finishes it', async () => {
   const fs = memoryFs();
   const stuck = { install: () => ({ subscribe: () => () => {}, done: new Promise(() => {}), cancel() {} }) };

@@ -1274,7 +1274,10 @@ import { MARGIN2, spaceShortfall, stillNeeded } from './space.js';
           if (!fs.exists(job2.output) && fs.diskUsage(job2.root).free < (estimate || 0) + MARGIN2)
             throw new Error("Not enough space to extract this download. Free space and retry.");
           const { password: listed, ...unlocked } = options;
-          const passwords = [listed, ...KNOWN_PASSWORDS.filter((password) => password !== listed)];
+          // The one the player typed (setArchivePassword) goes first, then the catalog's (or none), then the known ones.
+          const typed = job2.archivePassword || void 0;
+          const usual = [listed, ...KNOWN_PASSWORDS.filter((password) => password !== listed)];
+          const passwords = typed === void 0 ? usual : [typed, ...usual.filter((password) => password !== typed)];
           for (let index = 0; !result; index++) {
             const task = archives.extract(passwords[index] === void 0 ? unlocked : { ...unlocked, password: passwords[index] });
             active2.task = task;
@@ -2334,6 +2337,22 @@ import { MARGIN2, spaceShortfall, stillNeeded } from './space.js';
         delete job2.retryAt;
         clearTimeout(retryTimers.get(job2.id));
         retryTimers.delete(job2.id);
+        job2.state = "queued";
+        job2.error = "";
+        change();
+        pump();
+      },
+      /**
+       * The password the player typed for an archive no known password opened: kept on the download, tried first,
+       * and the extraction runs again on the archive already on the drive (nothing is downloaded again).
+       */
+      setArchivePassword(id, password) {
+        const job2 = find(id);
+        const typed = String(password ?? "").trim();
+        if (!job2 || !typed || job2.state !== "failed" || !PASSWORD_FAILURE.test(cause(job2.error))) return;
+        console.log(`[download-queue] ${job2.id}: the player typed an archive password; extracting again`);
+        job2.archivePassword = typed;
+        delete job2.retryAt;
         job2.state = "queued";
         job2.error = "";
         change();
