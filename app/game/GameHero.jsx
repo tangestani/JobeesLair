@@ -8,7 +8,7 @@ import { BackLink } from './BackLink.jsx';
 import { DownloadButton } from './DownloadButton.jsx';
 import { COVER, HERO, LOGO } from './art.js';
 import { canDownload } from './releases.js';
-import { readyLinks } from './sources.js';
+import { packageLinks, readyLinks } from './sources.js';
 import { useHealthyReleases } from '../state/links.js';
 import { SPAN_MAX, fitBytes } from '../i18n/fit.js';
 import { latin, useLocale, useT } from '../i18n/index.js';
@@ -27,14 +27,17 @@ import { Icon } from '../ui/Icon.jsx';
   var GREEN = "#4ade80";
   var PILL_TEXT = { fontFamily: "Exo2", fontSize: 19, fontWeight: 600, lineHeight: 26 };
   // 0.5.1: whether the game has a download that runs on this console, said on the page at once, before any
-  // list is opened: "13.60 Ready · 3 links" in green, else "No 13.60 Ready links".
+  // list is opened: "13.60 Ready · 3 links" in green; with none of those, its PS5 fake packages, which play once
+  // installed ("FPKG · 2 links", green too); else "No 13.60 Ready links".
   function ReadyPill({ game }) {
     const t2 = useT();
     // With what the link check found (state/links.js), as the button's own list: a link found gone is not counted.
     const releases = useHealthyReleases(game.releases || []);
-    const count = readyLinks(releases);
+    const ready = readyLinks(releases);
+    const packages = ready ? 0 : packageLinks(releases);
+    const count = ready || packages;
     if (!count && !canDownload(game)) return null;
-    const label = t2("release.compat.ready");
+    const label = t2(ready || !packages ? "release.compat.ready" : "release.type.fpkg");
     const tone = count ? GREEN : colors.muted;
     return jsx(View, { style: { borderRadius: radius.xs, borderWidth: 1, borderColor: tone, paddingHorizontal: 10, paddingVertical: 2 }, children: jsx(Text, { style: { ...PILL_TEXT, color: tone }, children: count ? t2("game.readyLinks", { label, count }) : t2("game.noReadyLinks", { label }) }) });
   }

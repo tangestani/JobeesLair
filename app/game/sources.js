@@ -176,16 +176,19 @@ import { formatBytes } from '../state/size.js';
   function preferredRelease(releases) {
     return releases.map(ranked).sort(compare)[0]?.index ?? 0;
   }
-  // 0.5.1: whether a source runs on this console as it is (release-sets.js compatible1360: a dump or image
-  // ShadowMount+ mounts), leaving out add-ons, backports, links found gone and sources listed as unavailable.
-  // `readyLinks`: how many of a game's sources do.
-  function runsHere(release) {
+  // Whether a source is the game itself and can be had here: not an add-on or backport, not a link found gone or
+  // listed as unavailable, and not a torrent without a debrid key.
+  function usableGame(release) {
     if (!release || release.unavailableReason || release.linkHealth?.status === "dead" || isDlc(release) || isBackport(release)) return false;
-    // A torrent needs a debrid key before it is a link anyone here can use.
-    if (access(release) === "torrent" && !activeService()) return false;
-    return release.compatible1360 === true;
+    return access(release) !== "torrent" || Boolean(activeService());
   }
+  // 0.5.1: whether a source runs on this console as it is (release-sets.js compatible1360: a dump or image
+  // ShadowMount+ mounts). `readyLinks`: how many of a game's sources do.
+  var runsHere = (release) => usableGame(release) && release.compatible1360 === true;
   var readyLinks = (releases) => (releases || []).filter((release) => runsHere(release)).length;
+  // How many of a game's sources are a PS5 fake package it can use: not "Ready" (the console installs it first),
+  // but it plays once installed, on any jailbroken firmware.
+  var packageLinks = (releases) => (releases || []).filter((release) => usableGame(release) && release.dumpType === "fpkg" && release.platform === "ps5").length;
   // 0.5.1: every source's index in the order they are offered (ranked above), best first.
   function sourceOrder(releases) {
     return releases.map(ranked).sort(compare).map(({ index }) => index);
@@ -205,4 +208,4 @@ import { formatBytes } from '../state/size.js';
     return sections.filter((section) => section.items.length);
   }
 
-export { captureStanding, describeSource, fallbacks, isBackport, isCdnProvider, isDlc, isImage, labelFirmware, preferredRelease, readyLinks, runsHere, sourceOrder, sourceSections, throughDebrid };
+export { captureStanding, describeSource, fallbacks, isBackport, isCdnProvider, isDlc, isImage, labelFirmware, packageLinks, preferredRelease, readyLinks, runsHere, sourceOrder, sourceSections, throughDebrid };

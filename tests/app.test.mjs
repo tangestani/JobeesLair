@@ -12,7 +12,7 @@ const { createDownloadQueue, BUSY } = await load('app/state/download-queue.js');
 const { diagnoseLaunch, launchOutcomes } = await load('app/state/launch-diagnosis.js');
 const { readinessOf, readinessText, cardReadiness } = await load('app/state/readiness.js');
 const { backportAdvice } = await load('app/state/firmware.js');
-const { describeSource, preferredRelease, sourceSections } = await load('app/game/sources.js');
+const { describeSource, packageLinks, preferredRelease, readyLinks, sourceSections } = await load('app/game/sources.js');
 const { newer } = await load('app/state/updater.js');
 const { configure } = await load('app/i18n/core.js');
 const { shelfEntries } = await load('app/library/shelf.js');
@@ -2664,6 +2664,16 @@ test('ranking: a PS5 FPKG is recommended over a dump ShadowMount+ mounts, even f
   assert.equal(preferredRelease([fpkg, dump]), 1, 'without types Archive.org would come first');
   assert.equal(preferredRelease(typed), 0);
   assert.equal(preferredRelease(withReleaseTypes([dump], 'ps5')), 0, 'without an fpkg the dump is still offered');
+});
+
+test('game page counts: an fpkg-only game has no Ready links but its usable PS5 packages count', () => {
+  const pkg = (id, extra = {}) => ({ id, provider: 'mirror.example', url: `https://mirror.example/${id}/PPSA01234-game.pkg`, format: 'pkg', filename: 'PPSA01234-game.pkg', label: 'USA Base (v01.00) - Direct', ...extra });
+  const releases = withReleaseTypes([pkg('a'), pkg('b'), pkg('gone', { linkHealth: { status: 'dead' } }), pkg('dlc', { label: 'USA DLC - Direct' })], 'ps5');
+  assert.equal(readyLinks(releases), 0, 'an fpkg is installed first, so not Ready');
+  assert.equal(packageLinks(releases), 2, 'a link found gone and an add-on do not count');
+  const image = { id: 'i', provider: 'cdn.example', url: 'https://cdn.example/Game.exfat', format: 'exfat', filename: 'Game.exfat', label: 'USA Base (v01.00) - Direct' };
+  assert.equal(readyLinks(withReleaseTypes([image, pkg('a')], 'ps5')), 1);
+  assert.equal(packageLinks(withReleaseTypes([pkg('c', { filename: 'CUSA01234-game.pkg', url: 'https://mirror.example/CUSA01234-game.pkg' })], 'ps4')), 0, 'a PS4 package is not counted');
 });
 
 test('release cache: every release carries its type, the platform from the title ID', () => {
