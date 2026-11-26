@@ -76,7 +76,8 @@ import { MARGIN2, spaceShortfall, stillNeeded } from './space.js';
   // on the archive's headers before anything is written ("RAR archive password is missing.",
   // "Incorrect RAR archive password.", "Incorrect RAR5 archive password."), and a failed attempt leaves
   // no staging behind, so each one costs a moment. They are checked on the console: nothing counts them.
-  var KNOWN_PASSWORDS = ["DLPSGAME.COM", "[DLPSGAME.COM]", "www.DLPSGAME.COM", "SuperPSX", "downloadgameps3.com", "hako"];
+  // "(DLPSGAME.COM)": DLPSGAME's RAR5 uploads with encrypted headers (the folder inside is named with it too).
+  var KNOWN_PASSWORDS = ["DLPSGAME.COM", "(DLPSGAME.COM)", "[DLPSGAME.COM]", "www.DLPSGAME.COM", "SuperPSX", "downloadgameps3.com", "hako"];
   var PASSWORD_FAILURE = /archive password|passphrase/i;
   function durable(fs, stateDir2) {
     try {

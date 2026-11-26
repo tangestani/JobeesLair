@@ -3585,6 +3585,23 @@ test('TorBox: 4 connections, and Retry after a failure asks TorBox for a fresh l
   assert.deepEqual(downloads.requests.map((request) => request.url), ['https://nexus-1.tb-cdn.example/dld/file', 'https://nexus-2.tb-cdn.example/dld/file']);
 });
 
+test('an archive whose source names no password opens with a known one: (DLPSGAME.COM), tried in turn', async () => {
+  const fs = memoryFs();
+  const packages = installer();
+  const base = extractor(fs, { 'Game.pkg': 900 });
+  const tried = [];
+  const archives = { ...base, extract(options) {
+    tried.push(options.password);
+    if (options.password !== '(DLPSGAME.COM)') return { subscribe: () => () => {}, done: Promise.reject(new Error('Archives.extract /data/x.rar: Incorrect RAR archive password.')), cancel() {} };
+    return base.extract(options);
+  } };
+  const queue = queueWith({ fs, downloads: engine(fs), archives, packages });
+  const job = await settle(queue, queue.enqueue(game, image('Game.zip', 500), '/data'));
+  assert.equal(job.state, 'installed', job.error);
+  assert.deepEqual(tried, [undefined, 'DLPSGAME.COM', '(DLPSGAME.COM)'], 'none first, then the known ones in order until one opens it');
+  assert.equal(packages.installed.length, 1);
+});
+
 test('an install cut off by closing the app waits on Install at the next launch, and Install finishes it', async () => {
   const fs = memoryFs();
   const stuck = { install: () => ({ subscribe: () => () => {}, done: new Promise(() => {}), cancel() {} }) };
