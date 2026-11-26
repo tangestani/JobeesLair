@@ -2979,7 +2979,7 @@ test('7z: one whose end fits downloads; another format, a server without ranges 
 test('errors: only refusals a retry meets again point to another source in place of Retry', async () => {
   const { finalError } = await load('app/downloads/errors.js');
   assert.ok(finalError(TOO_BIG));
-  assert.ok(finalError('download.zip / x: Missing archive password'));
+  assert.ok(!finalError('download.zip / x: Missing archive password'), 'Retry tries the known passwords again, on the archive already here');
   assert.ok(finalError('Incomplete RAR archive or missing volume.', true));
   for (const error of ['Incomplete RAR archive or missing volume.', 'HTTP 404', 'Not enough memory to extract.', 'Not enough space on the selected drive. Free space and retry.', 'transfer interrupted', ''])
     assert.ok(!finalError(error), error);
